@@ -27,7 +27,7 @@ export default function ResultPage() {
       const interval = setInterval(fetchMatchStatus, 5000)
       return () => clearInterval(interval)
     }
-  }, [matchId, userType])
+  }, [matchId, userType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchMatchStatus = async () => {
     try {
@@ -39,7 +39,7 @@ export default function ResultPage() {
         const errorData = await response.json()
         setError(errorData.error || '매치 정보를 가져올 수 없습니다.')
       }
-    } catch (error) {
+    } catch {
       setError('네트워크 오류가 발생했습니다.')
     } finally {
       setIsLoading(false)
@@ -54,14 +54,13 @@ export default function ResultPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
         // PDF 생성 완료 후 매치 정보 다시 가져오기
         fetchMatchStatus()
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'PDF 생성에 실패했습니다.')
       }
-    } catch (error) {
+    } catch {
       setError('PDF 생성 중 오류가 발생했습니다.')
     } finally {
       setIsGeneratingPdf(false)
@@ -77,7 +76,6 @@ export default function ResultPage() {
   const isTeacher = userType === 'teacher'
   const userName = isTeacher ? match?.teacherName : match?.studentName
   const otherUserName = isTeacher ? match?.studentName : match?.teacherName
-  const userIcon = isTeacher ? '👨‍🏫' : '👨‍🎓'
   const waitingIcon = isTeacher ? '👨‍🎓' : '👨‍🏫'
 
   if (isLoading) {

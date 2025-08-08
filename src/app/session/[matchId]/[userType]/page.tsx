@@ -54,7 +54,7 @@ export default function SessionPage() {
     if (matchId && userType) {
       fetchSessionData()
     }
-  }, [matchId, userType])
+  }, [matchId, userType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSessionData = async () => {
     try {
@@ -80,7 +80,7 @@ export default function SessionPage() {
         const errorData = await response.json()
         setError(errorData.error || '세션을 찾을 수 없습니다.')
       }
-    } catch (error) {
+    } catch {
       setError('네트워크 오류가 발생했습니다.')
     } finally {
       setIsLoading(false)
@@ -117,7 +117,7 @@ export default function SessionPage() {
         const errorData = await response.json()
         setError(errorData.error || '제출에 실패했습니다.')
       }
-    } catch (error) {
+    } catch {
       setError('네트워크 오류가 발생했습니다.')
     } finally {
       setIsSubmitting(false)
@@ -128,7 +128,6 @@ export default function SessionPage() {
   const userName = isTeacher ? match?.teacherName : match?.studentName
   const otherUserName = isTeacher ? match?.studentName : match?.teacherName
   const userIcon = isTeacher ? '👨‍🏫' : '👨‍🎓'
-  const userColor = isTeacher ? 'orange' : 'yellow'
 
   if (isLoading) {
     return (

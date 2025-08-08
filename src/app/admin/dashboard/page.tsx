@@ -18,7 +18,7 @@ interface Match {
 }
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoading, setIsLoading] = useState(true)

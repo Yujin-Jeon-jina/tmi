@@ -56,8 +56,8 @@ export async function POST(
     ])
 
     // 카테고리별 3개씩 질문 조회 (세션 API와 동일한 로직)
-    let teachersQuestions: any[] = [];
-    let studentsQuestions: any[] = [];
+    const teachersQuestions: unknown[] = [];
+    const studentsQuestions: unknown[] = [];
 
     // 선생님 질문들 (카테고리별 3개씩)
     const teacherCategories = await prisma.category.findMany({
