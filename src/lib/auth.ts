@@ -68,9 +68,9 @@ export const authOptions: NextAuthOptions = {
           return userObject
         } catch (error) {
           console.error('❌ Database/Auth error:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : 'Unknown'
           })
           return null
         }
