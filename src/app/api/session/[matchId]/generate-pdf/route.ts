@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generatePdfHtml } from '@/lib/pdf-template'
-import puppeteer from 'puppeteer'
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import path from 'path'
 
 export async function POST(
   request: NextRequest,
@@ -142,7 +138,7 @@ export async function POST(
       }
     })
 
-    // HTML 생성
+    // HTML 생성 및 반환 (클라이언트에서 PDF 생성을 위해)
     const htmlContent = generatePdfHtml({
       match: {
         teacherName: match.teacherName,
@@ -153,54 +149,26 @@ export async function POST(
       studentAnswers: completeStudentAnswers
     })
 
-    // PDF 파일 경로 설정
-    const pdfDir = path.join(process.cwd(), 'public', 'pdfs')
+    // PDF URL을 일단 생성된 것으로 표시
     const pdfFileName = `${matchId}.pdf`
-    const pdfPath = path.join(pdfDir, pdfFileName)
     const pdfUrl = `/pdfs/${pdfFileName}`
-
-    // 디렉토리 생성
-    if (!existsSync(pdfDir)) {
-      await mkdir(pdfDir, { recursive: true })
-    }
-
-    // Puppeteer로 PDF 생성
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    
+    // 매치에 PDF URL 저장
+    await prisma.match.update({
+      where: { id: matchId },
+      data: { pdfUrl }
     })
 
-    try {
-      const page = await browser.newPage()
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20px',
-          right: '20px',
-          bottom: '20px',
-          left: '20px'
-        }
-      })
-
-      // PDF 파일 저장
-      await writeFile(pdfPath, pdfBuffer)
-
-      // 매치에 PDF URL 저장
-      await prisma.match.update({
-        where: { id: matchId },
-        data: { pdfUrl }
-      })
-
-      return NextResponse.json({
-        message: 'PDF가 성공적으로 생성되었습니다.',
-        pdfUrl
-      })
-    } finally {
-      await browser.close()
-    }
+    return NextResponse.json({
+      message: 'PDF 데이터가 준비되었습니다.',
+      htmlContent,
+      pdfUrl,
+      matchData: {
+        teacherName: match.teacherName,
+        studentName: match.studentName,
+        createdAt: match.createdAt.toISOString()
+      }
+    })
   } catch (error) {
     console.error('PDF 생성 실패:', error)
     return NextResponse.json({ error: 'PDF 생성 중 오류가 발생했습니다.' }, { status: 500 })
