@@ -1,103 +1,107 @@
-import Image from "next/image";
+import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-gradient-to-br from-orange-100 via-yellow-50 to-amber-100">
+      {/* Header */}
+      <nav className="p-6">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="text-2xl font-bold text-gray-800">
+            📦 만반잘부.zip
+          </div>
+          <Link 
+            href="/admin/login"
+            className="bg-white/70 backdrop-blur-sm text-gray-700 px-4 py-2 rounded-2xl font-medium hover:bg-white/90 transition-all duration-300"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            관리자 로그인
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+        <div className="text-center max-w-4xl mx-auto">
+          {/* Main Title */}
+          <div className="text-6xl mb-6 animate-bounce">
+            📦✨🤝
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+            만나서 반가워,
+            <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent"> 잘 부탁해!</span>
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
+            비대면 과외 선생님과 학생이 서로에 대한 재미있는 질문을 나누며<br />
+            친해질 수 있는 모든 걸 한 번에 압축해서 제공해드려요! 📦
+          </p>
+
+          {/* Features */}
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+              <div className="text-4xl mb-4">💬</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">압축된 질문들</h3>
+              <p className="text-gray-600">친해지는 데 필요한 모든 질문을 zip 파일처럼 깔끔하게 정리했어요</p>
+            </div>
+            
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+              <div className="text-4xl mb-4">⚡</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">압축 해제</h3>
+              <p className="text-gray-600">두 사람 모두 답변을 완료하면 바로 친해지는 파일이 압축 해제돼요</p>
+            </div>
+            
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+              <div className="text-4xl mb-4">📋</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">완벽한 패키지</h3>
+              <p className="text-gray-600">서로의 답변을 보기 좋게 정리한 완벽한 패키지를 제공해드려요</p>
+            </div>
+          </div>
+
+          {/* How it works */}
+          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 mb-12 shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8">📦 압축 해제 과정</h2>
+            <div className="grid md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
+                <h4 className="font-semibold text-gray-800 mb-2">파일 생성</h4>
+                <p className="text-sm text-gray-600">관리자가 선생님과 학생 정보를 입력</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
+                <h4 className="font-semibold text-gray-800 mb-2">링크 전달</h4>
+                <p className="text-sm text-gray-600">각자에게 개인 맞춤 압축 파일 링크 전송</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
+                <h4 className="font-semibold text-gray-800 mb-2">답변 입력</h4>
+                <p className="text-sm text-gray-600">재미있는 질문들에 자유롭게 답변</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">4</div>
+                <h4 className="font-semibold text-gray-800 mb-2">압축 해제!</h4>
+                <p className="text-sm text-gray-600">서로의 답변을 보며 친해지기 완료</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link 
+              href="/admin/login"
+              className="inline-block bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-4 rounded-3xl font-bold text-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              📦 압축 파일 만들러 가기
+            </Link>
+            <p className="text-gray-500 text-sm mt-4">
+              관리자 로그인: admin / admin123
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="text-center py-8 text-gray-500">
+        <p>📦 만반잘부.zip - 만나서 반가워, 잘 부탁해! 모든 걸 압축해서 한 번에!</p>
       </footer>
     </div>
-  );
+  )
 }
