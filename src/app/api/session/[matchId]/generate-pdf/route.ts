@@ -62,7 +62,7 @@ export async function POST(
     // 선생님 질문들 (카테고리별 3개씩)
     const teacherCategories = await prisma.category.findMany({
       where: { role: 'teacher' },
-      orderBy: { id: 'asc' }
+      idBy: { id: 'asc' }
     });
 
     for (const category of teacherCategories) {
@@ -72,7 +72,7 @@ export async function POST(
           isActive: true 
         },
         include: { category: true },
-        orderBy: { id: 'asc' },
+        idBy: { id: 'asc' },
         take: 3
       });
       teachersQuestions.push(...categoryQuestions);
@@ -81,7 +81,7 @@ export async function POST(
     // 학생 질문들 (카테고리별 3개씩)
     const studentCategories = await prisma.category.findMany({
       where: { role: 'student' },
-      orderBy: { id: 'asc' }
+      idBy: { id: 'asc' }
     });
 
     for (const category of studentCategories) {
@@ -91,7 +91,7 @@ export async function POST(
           isActive: true 
         },
         include: { category: true },
-        orderBy: { id: 'asc' },
+        idBy: { id: 'asc' },
         take: 3
       });
       studentsQuestions.push(...categoryQuestions);

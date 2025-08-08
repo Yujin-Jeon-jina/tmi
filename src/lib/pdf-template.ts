@@ -3,7 +3,7 @@ interface Answer {
   content: string
   question: {
     content: string
-    order: number
+    id: number
   }
 }
 
