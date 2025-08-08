@@ -23,7 +23,7 @@ export async function GET(
     }
 
     // 사용자 타입에 따라 적절한 질문들 조회 (카테고리별 3개씩 총 15개)
-    const questions: unknown[] = [];
+    const questions: any[] = [];
     
     if (userType === 'teacher') {
       // 선생님이 답변할 질문들 (학생→선생님 질문) - 카테고리별 3개씩
