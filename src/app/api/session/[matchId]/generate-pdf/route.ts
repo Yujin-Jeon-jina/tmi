@@ -26,12 +26,19 @@ export async function POST(
       return NextResponse.json({ error: '아직 모든 답변이 완료되지 않았습니다.' }, { status: 400 })
     }
 
-    // 이미 PDF가 생성되어 있으면 기존 URL 반환
-    if (match.pdfUrl) {
-      return NextResponse.json({ 
-        message: 'PDF가 이미 생성되어 있습니다.',
-        pdfUrl: match.pdfUrl 
-      })
+    // Vercel 환경에서는 항상 새로 생성 (파일이 저장되지 않으므로)
+    // 로컬 환경에서만 기존 PDF 확인
+    const isVercelCheck = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+    
+    if (!isVercelCheck && match.pdfUrl) {
+      // 로컬에서는 실제 파일이 존재하는지 확인
+      const pdfFilePath = path.join(process.cwd(), 'public', match.pdfUrl)
+      if (fs.existsSync(pdfFilePath)) {
+        return NextResponse.json({
+          message: 'PDF가 이미 생성되어 있습니다.',
+          pdfUrl: match.pdfUrl
+        })
+      }
     }
 
     // 답변 데이터 조회 (카테고리별 3개씩 제한)
