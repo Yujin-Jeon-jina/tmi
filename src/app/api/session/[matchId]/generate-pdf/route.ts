@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generatePdfHtml } from '@/lib/pdf-template'
+import puppeteer from 'puppeteer'
+import fs from 'fs'
+import path from 'path'
 
 export async function POST(
   request: NextRequest,
@@ -138,7 +141,7 @@ export async function POST(
       }
     })
 
-    // HTML 생성 및 반환 (클라이언트에서 PDF 생성을 위해)
+    // HTML 생성
     const htmlContent = generatePdfHtml({
       match: {
         teacherName: match.teacherName,
@@ -149,9 +152,42 @@ export async function POST(
       studentAnswers: completeStudentAnswers
     })
 
-    // PDF URL을 일단 생성된 것으로 표시
+    // PDF 파일 이름 및 경로 설정
     const pdfFileName = `${matchId}.pdf`
+    const publicDir = path.join(process.cwd(), 'public', 'pdfs')
+    const pdfFilePath = path.join(publicDir, pdfFileName)
     const pdfUrl = `/pdfs/${pdfFileName}`
+
+    // public/pdfs 디렉토리가 없으면 생성
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true })
+    }
+
+    // Puppeteer로 PDF 생성
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+    
+    try {
+      const page = await browser.newPage()
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+      
+      // PDF 생성 및 저장
+      await page.pdf({
+        path: pdfFilePath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
+      })
+    } finally {
+      await browser.close()
+    }
     
     // 매치에 PDF URL 저장
     await prisma.match.update({
@@ -160,8 +196,7 @@ export async function POST(
     })
 
     return NextResponse.json({
-      message: 'PDF 데이터가 준비되었습니다.',
-      htmlContent,
+      message: 'PDF가 성공적으로 생성되었습니다.',
       pdfUrl,
       matchData: {
         teacherName: match.teacherName,

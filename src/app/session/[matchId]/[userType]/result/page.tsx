@@ -56,13 +56,11 @@ export default function ResultPage() {
       if (response.ok) {
         const data = await response.json()
         
-        // HTML 내용을 사용하여 클라이언트에서 PDF 생성
-        if (data.htmlContent) {
-          await generateClientPdf(data.htmlContent, data.matchData)
-        }
-        
-        // 매치 정보 다시 가져오기
+        // 매치 정보 다시 가져오기 (PDF URL이 업데이트됨)
         fetchMatchStatus()
+        
+        // 성공 메시지 표시
+        alert('PDF가 성공적으로 생성되었습니다!')
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'PDF 생성에 실패했습니다.')
@@ -71,55 +69,6 @@ export default function ResultPage() {
       setError('PDF 생성 중 오류가 발생했습니다.')
     } finally {
       setIsGeneratingPdf(false)
-    }
-  }
-
-  const generateClientPdf = async (htmlContent: string, matchData: any) => {
-    try {
-      // jsPDF와 html2canvas 동적 import
-      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
-        import('jspdf'),
-        import('html2canvas')
-      ])
-
-      // 임시 DOM 엘리먼트 생성
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = htmlContent
-      tempDiv.style.position = 'absolute'
-      tempDiv.style.left = '-9999px'
-      tempDiv.style.top = '-9999px'
-      tempDiv.style.width = '794px' // A4 width at 96 DPI
-      document.body.appendChild(tempDiv)
-
-      // HTML을 캔버스로 변환
-      const canvas = await html2canvas(tempDiv, {
-        width: 794,
-        height: 1123, // A4 height at 96 DPI
-        scale: 2
-      })
-
-      // 임시 DOM 엘리먼트 제거
-      document.body.removeChild(tempDiv)
-
-      // PDF 생성
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      })
-
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight)
-      
-      // PDF 다운로드
-      const fileName = `만반잘부_${matchData.teacherName}_${matchData.studentName}.pdf`
-      pdf.save(fileName)
-      
-    } catch (error) {
-      console.error('Client PDF generation error:', error)
-      setError('PDF 생성 중 오류가 발생했습니다.')
     }
   }
 
