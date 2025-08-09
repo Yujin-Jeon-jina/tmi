@@ -8,8 +8,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const { matchId } = await params
+  
   try {
-    const { matchId } = await params
 
     // 매치 조회
     const match = await prisma.match.findUnique({
