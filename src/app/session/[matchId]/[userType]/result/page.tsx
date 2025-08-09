@@ -54,13 +54,33 @@ export default function ResultPage() {
       })
       
       if (response.ok) {
-        await response.json() // PDF 생성 응답 확인
+        // 응답이 PDF인지 JSON인지 확인
+        const contentType = response.headers.get('content-type')
         
-        // 매치 정보 다시 가져오기 (PDF URL이 업데이트됨)
-        fetchMatchStatus()
-        
-        // 성공 메시지 표시
-        alert('PDF가 성공적으로 생성되었습니다!')
+        if (contentType?.includes('application/pdf')) {
+          // PDF 직접 다운로드 (Vercel 환경)
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `만반잘부_${match?.teacherName}_${match?.studentName}.pdf`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          
+          // 성공 메시지 표시
+          alert('PDF가 성공적으로 생성되고 다운로드되었습니다!')
+        } else {
+          // JSON 응답 (로컬 환경)
+          await response.json() // PDF 생성 응답 확인
+          
+          // 매치 정보 다시 가져오기 (PDF URL이 업데이트됨)
+          fetchMatchStatus()
+          
+          // 성공 메시지 표시
+          alert('PDF가 성공적으로 생성되었습니다!')
+        }
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'PDF 생성에 실패했습니다.')

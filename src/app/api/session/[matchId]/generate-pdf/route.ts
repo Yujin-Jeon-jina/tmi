@@ -154,18 +154,29 @@ export async function POST(
 
     // PDF 파일 이름 및 경로 설정
     const pdfFileName = `${matchId}.pdf`
-    const publicDir = path.join(process.cwd(), 'public', 'pdfs')
-    const pdfFilePath = path.join(publicDir, pdfFileName)
-    const pdfUrl = `/pdfs/${pdfFileName}`
-
-    // public/pdfs 디렉토리가 없으면 생성
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true })
+    const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
+    
+    let pdfFilePath: string;
+    let pdfUrl: string;
+    
+    if (isVercel) {
+      // Vercel 환경에서는 /tmp 디렉토리 사용
+      pdfFilePath = path.join('/tmp', pdfFileName)
+      pdfUrl = `/pdfs/${pdfFileName}` // URL은 동일하게 유지
+    } else {
+      // 로컬 환경에서는 public/pdfs 사용
+      const publicDir = path.join(process.cwd(), 'public', 'pdfs')
+      pdfFilePath = path.join(publicDir, pdfFileName)
+      pdfUrl = `/pdfs/${pdfFileName}`
+      
+      // public/pdfs 디렉토리가 없으면 생성
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true })
+      }
     }
 
     // 환경에 따른 Puppeteer 설정
     let browser;
-    const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
     
     console.log('PDF 생성 시작:', { isVercel, matchId });
     
@@ -204,44 +215,80 @@ export async function POST(
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
       
       console.log('PDF 생성 중...', pdfFilePath);
-      // PDF 생성 및 저장
-      await page.pdf({
-        path: pdfFilePath,
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20px',
-          right: '20px',
-          bottom: '20px',
-          left: '20px'
-        }
-      })
-      console.log('PDF 파일 생성 완료');
+      
+      if (isVercel) {
+        // Vercel에서는 PDF를 Buffer로 생성
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '20px',
+            right: '20px',
+            bottom: '20px',
+            left: '20px'
+          }
+        })
+        console.log('PDF Buffer 생성 완료');
+        
+        // 브라우저 종료
+        await browser.close()
+        
+        // 매치에 PDF URL 저장
+        await prisma.match.update({
+          where: { id: matchId },
+          data: { pdfUrl }
+        })
+        
+        // PDF를 직접 반환
+        return new NextResponse(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${matchId}.pdf"`
+          }
+        })
+      } else {
+        // 로컬에서는 파일로 저장
+        await page.pdf({
+          path: pdfFilePath,
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '20px',
+            right: '20px',
+            bottom: '20px',
+            left: '20px'
+          }
+        })
+        console.log('PDF 파일 생성 완료');
+      }
     } catch (pdfError: any) {
       console.error('PDF 생성 과정에서 오류:', pdfError);
       throw new Error(`PDF 생성 실패: ${pdfError?.message || pdfError}`);
     } finally {
-      if (browser) {
+      if (browser && !isVercel) {
         console.log('브라우저 종료 중...');
         await browser.close()
       }
     }
     
-    // 매치에 PDF URL 저장
-    await prisma.match.update({
-      where: { id: matchId },
-      data: { pdfUrl }
-    })
+    if (!isVercel) {
+      // 로컬 환경에서만 JSON 응답 반환
+      // 매치에 PDF URL 저장
+      await prisma.match.update({
+        where: { id: matchId },
+        data: { pdfUrl }
+      })
 
-    return NextResponse.json({
-      message: 'PDF가 성공적으로 생성되었습니다.',
-      pdfUrl,
-      matchData: {
-        teacherName: match.teacherName,
-        studentName: match.studentName,
-        createdAt: match.createdAt.toISOString()
-      }
-    })
+      return NextResponse.json({
+        message: 'PDF가 성공적으로 생성되었습니다.',
+        pdfUrl,
+        matchData: {
+          teacherName: match.teacherName,
+          studentName: match.studentName,
+          createdAt: match.createdAt.toISOString()
+        }
+      })
+    }
   } catch (error: any) {
     console.error('PDF 생성 실패:', {
       error: error?.message || error,
