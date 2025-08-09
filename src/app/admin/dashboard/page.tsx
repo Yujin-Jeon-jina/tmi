@@ -69,8 +69,42 @@ export default function AdminDashboard() {
     return `${window.location.origin}/session/${matchId}/student`
   }
 
-  const openPdf = (pdfUrl: string) => {
-    window.open(pdfUrl, '_blank')
+  const generateAndDownloadPdf = async (matchId: string, teacherName: string, studentName: string) => {
+    try {
+      const response = await fetch(`/api/session/${matchId}/generate-pdf`, {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        const contentType = response.headers.get('content-type')
+        
+        if (contentType?.includes('application/pdf')) {
+          // PDF 직접 다운로드 (Vercel 환경)
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `만반잘부_${teacherName}_${studentName}.pdf`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          
+          alert('PDF가 성공적으로 다운로드되었습니다!')
+        } else {
+          alert('PDF가 성공적으로 생성되었습니다!')
+        }
+        
+        // 매치 리스트 새로고침
+        fetchMatches()
+      } else {
+        const errorData = await response.json()
+        alert(`PDF 생성 실패: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('PDF 생성 오류:', error)
+      alert('PDF 생성 중 오류가 발생했습니다.')
+    }
   }
 
   const getStatusText = (status: string) => {
@@ -342,14 +376,14 @@ export default function AdminDashboard() {
                             <span className="sm:hidden">링크</span>
                           </button>
                           
-                          {match.pdfUrl && (
+                          {match.status === 'both_completed' && (
                             <button 
-                              onClick={() => openPdf(match.pdfUrl!)}
+                              onClick={() => generateAndDownloadPdf(match.id, match.teacherName, match.studentName)}
                               className="flex-1 lg:w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
-                              title="PDF 보기"
+                              title="PDF 생성 및 다운로드"
                             >
                               <span>📄</span>
-                              <span className="hidden sm:inline">결과 PDF</span>
+                              <span className="hidden sm:inline">PDF 다운로드</span>
                               <span className="sm:hidden">PDF</span>
                             </button>
                           )}
