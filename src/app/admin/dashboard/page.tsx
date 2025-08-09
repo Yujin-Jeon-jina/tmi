@@ -17,6 +17,22 @@ interface Match {
   pdfUrl?: string
 }
 
+interface Answer {
+  id: string
+  questionId: number | null
+  questionText: string
+  categoryName: string
+  content: string
+  createdAt: string
+}
+
+interface MatchAnswers {
+  match: Match
+  teacherAnswers: Answer[]
+  studentAnswers: Answer[]
+  totalAnswers: number
+}
+
 export default function AdminDashboard() {
   const { status } = useSession()
   const router = useRouter()
@@ -28,6 +44,9 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null)
+  const [showAnswersModal, setShowAnswersModal] = useState(false)
+  const [selectedMatchAnswers, setSelectedMatchAnswers] = useState<MatchAnswers | null>(null)
+  const [loadingAnswers, setLoadingAnswers] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -114,6 +133,26 @@ export default function AdminDashboard() {
       alert('PDF 생성 중 오류가 발생했습니다.')
     } finally {
       setGeneratingPdf(null)
+    }
+  }
+
+  const viewAnswers = async (matchId: string) => {
+    setLoadingAnswers(true)
+    try {
+      const response = await fetch(`/api/admin/matches/${matchId}/answers`)
+      if (response.ok) {
+        const data = await response.json()
+        setSelectedMatchAnswers(data)
+        setShowAnswersModal(true)
+      } else {
+        const errorData = await response.json()
+        alert(`답변 조회 실패: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('답변 조회 오류:', error)
+      alert('답변 조회 중 오류가 발생했습니다.')
+    } finally {
+      setLoadingAnswers(false)
     }
   }
 
@@ -386,6 +425,33 @@ export default function AdminDashboard() {
                             <span className="sm:hidden">링크</span>
                           </button>
                           
+                          {(match.status === 'teacher_completed' || match.status === 'student_completed' || match.status === 'both_completed') && (
+                            <button 
+                              onClick={() => viewAnswers(match.id)}
+                              disabled={loadingAnswers}
+                              className={`flex-1 lg:w-full ${
+                                loadingAnswers 
+                                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
+                                  : 'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 transform hover:scale-105'
+                              } text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2`}
+                              title="답변 내용 보기"
+                            >
+                              {loadingAnswers ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span className="hidden sm:inline">조회 중...</span>
+                                  <span className="sm:hidden">...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>💬</span>
+                                  <span className="hidden sm:inline">답변 보기</span>
+                                  <span className="sm:hidden">답변</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                          
                           {match.status === 'both_completed' && (
                             <button 
                               onClick={() => generateAndDownloadPdf(match.id, match.teacherName, match.studentName)}
@@ -524,6 +590,149 @@ export default function AdminDashboard() {
         onClose={() => setShowCreateForm(false)}
         onSuccess={fetchMatches}
       />
+
+      {/* Answers Modal */}
+      {showAnswersModal && selectedMatchAnswers && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">답변 내용</h2>
+                  <p className="text-indigo-100 mt-1">
+                    {selectedMatchAnswers.match.teacherName} 선생님 ↔ {selectedMatchAnswers.match.studentName} 학생
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAnswersModal(false)
+                    setSelectedMatchAnswers(null)
+                  }}
+                  className="text-white hover:text-indigo-200 transition-colors p-2"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {selectedMatchAnswers.totalAnswers === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📝</div>
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">아직 답변이 없습니다</h3>
+                  <p className="text-gray-500">선생님이나 학생이 답변을 작성하면 여기에 표시됩니다.</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* 선생님 답변 */}
+                  {selectedMatchAnswers.teacherAnswers.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>👨‍🏫</span>
+                        선생님 답변 ({selectedMatchAnswers.teacherAnswers.length}개)
+                      </h3>
+                      <div className="space-y-4">
+                        {selectedMatchAnswers.teacherAnswers.map((answer, index) => (
+                          <div key={answer.id} className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-lg text-xs font-medium">
+                                    {answer.categoryName}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">
+                                    {new Date(answer.createdAt).toLocaleDateString('ko-KR', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="font-medium text-gray-800 mb-2">{answer.questionText}</p>
+                                <div className="bg-white border border-blue-200 rounded-lg p-3">
+                                  <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 학생 답변 */}
+                  {selectedMatchAnswers.studentAnswers.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>👨‍🎓</span>
+                        학생 답변 ({selectedMatchAnswers.studentAnswers.length}개)
+                      </h3>
+                      <div className="space-y-4">
+                        {selectedMatchAnswers.studentAnswers.map((answer, index) => (
+                          <div key={answer.id} className="bg-green-50 border border-green-200 rounded-xl p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-lg text-xs font-medium">
+                                    {answer.categoryName}
+                                  </span>
+                                  <span className="text-gray-500 text-xs">
+                                    {new Date(answer.createdAt).toLocaleDateString('ko-KR', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="font-medium text-gray-800 mb-2">{answer.questionText}</p>
+                                <div className="bg-white border border-green-200 rounded-lg p-3">
+                                  <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 border-t">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  총 {selectedMatchAnswers.totalAnswers}개의 답변
+                </div>
+                <button
+                  onClick={() => {
+                    setShowAnswersModal(false)
+                    setSelectedMatchAnswers(null)
+                  }}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
