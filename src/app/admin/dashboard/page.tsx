@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [generatingPdf, setGeneratingPdf] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -70,6 +71,13 @@ export default function AdminDashboard() {
   }
 
   const generateAndDownloadPdf = async (matchId: string, teacherName: string, studentName: string) => {
+    // 이미 생성 중인 경우 중복 실행 방지
+    if (generatingPdf === matchId) {
+      return
+    }
+
+    setGeneratingPdf(matchId)
+    
     try {
       const response = await fetch(`/api/session/${matchId}/generate-pdf`, {
         method: 'POST'
@@ -104,6 +112,8 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('PDF 생성 오류:', error)
       alert('PDF 생성 중 오류가 발생했습니다.')
+    } finally {
+      setGeneratingPdf(null)
     }
   }
 
@@ -379,12 +389,27 @@ export default function AdminDashboard() {
                           {match.status === 'both_completed' && (
                             <button 
                               onClick={() => generateAndDownloadPdf(match.id, match.teacherName, match.studentName)}
-                              className="flex-1 lg:w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
-                              title="PDF 생성 및 다운로드"
+                              disabled={generatingPdf === match.id}
+                              className={`flex-1 lg:w-full ${
+                                generatingPdf === match.id 
+                                  ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
+                                  : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transform hover:scale-105'
+                              } text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2`}
+                              title={generatingPdf === match.id ? "PDF 생성 중..." : "PDF 생성 및 다운로드"}
                             >
-                              <span>📄</span>
-                              <span className="hidden sm:inline">PDF 다운로드</span>
-                              <span className="sm:hidden">PDF</span>
+                              {generatingPdf === match.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span className="hidden sm:inline">생성 중...</span>
+                                  <span className="sm:hidden">...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>📄</span>
+                                  <span className="hidden sm:inline">PDF 다운로드</span>
+                                  <span className="sm:hidden">PDF</span>
+                                </>
+                              )}
                             </button>
                           )}
                         </div>
