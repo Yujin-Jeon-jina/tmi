@@ -191,9 +191,9 @@ export async function POST(
         });
         console.log('로컬 브라우저 시작 성공');
       }
-    } catch (browserError) {
+    } catch (browserError: any) {
       console.error('브라우저 시작 실패:', browserError);
-      throw new Error(`브라우저 시작 실패: ${browserError.message}`);
+      throw new Error(`브라우저 시작 실패: ${browserError?.message || browserError}`);
     }
     
     try {
@@ -216,9 +216,9 @@ export async function POST(
         }
       })
       console.log('PDF 파일 생성 완료');
-    } catch (pdfError) {
+    } catch (pdfError: any) {
       console.error('PDF 생성 과정에서 오류:', pdfError);
-      throw new Error(`PDF 생성 실패: ${pdfError.message}`);
+      throw new Error(`PDF 생성 실패: ${pdfError?.message || pdfError}`);
     } finally {
       if (browser) {
         console.log('브라우저 종료 중...');
@@ -241,15 +241,15 @@ export async function POST(
         createdAt: match.createdAt.toISOString()
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('PDF 생성 실패:', {
-      error: error.message,
-      stack: error.stack,
+      error: error?.message || error,
+      stack: error?.stack,
       matchId,
       isVercel: !!process.env.VERCEL || !!process.env.VERCEL_ENV
     })
     return NextResponse.json({ 
-      error: `PDF 생성 중 오류가 발생했습니다: ${error.message}` 
+      error: `PDF 생성 중 오류가 발생했습니다: ${error?.message || error}` 
     }, { status: 500 })
   }
 }
