@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generatePdfHtml } from '@/lib/pdf-template'
-import puppeteer from 'puppeteer'
 import fs from 'fs'
 import path from 'path'
 
@@ -163,11 +162,28 @@ export async function POST(
       fs.mkdirSync(publicDir, { recursive: true })
     }
 
-    // Puppeteer로 PDF 생성
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
+    // 환경에 따른 Puppeteer 설정
+    let browser;
+    const isVercel = !!process.env.VERCEL_ENV;
+    
+    if (isVercel) {
+      // Vercel 환경에서 puppeteer-core + chromium 사용
+      const chromium = (await import('@sparticuz/chromium')).default;
+      const puppeteer = await import('puppeteer-core');
+      
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    } else {
+      // 로컬 환경에서 일반 puppeteer 사용
+      const puppeteer = await import('puppeteer');
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+    }
     
     try {
       const page = await browser.newPage()
@@ -186,7 +202,9 @@ export async function POST(
         }
       })
     } finally {
-      await browser.close()
+      if (browser) {
+        await browser.close()
+      }
     }
     
     // 매치에 PDF URL 저장
