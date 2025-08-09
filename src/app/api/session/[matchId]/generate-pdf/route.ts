@@ -81,12 +81,22 @@ export async function POST(
         include: { category: true }
       });
       
-      // 매치 ID와 카테고리를 시드로 사용해서 일관된 랜덤 결과 생성 (세션 API와 동일)
-      const shuffled = allCategoryQuestions.sort((a, b) => {
-        const seed = matchId + category.id + 'teacher' + a.id + b.id;
-        const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return (hash % 2) - 0.5;
-      });
+      // 매치 ID를 시드로 사용한 개선된 랜덤 셔플 (세션 API와 동일)
+      const seed = matchId + '_' + category.id + '_teacher';
+      const shuffled = allCategoryQuestions
+        .map(question => {
+          // 문자열 해시 생성 (더 강력한 랜덤성)
+          let hash = 0;
+          const str = seed + '_' + question.id;
+          for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // 32비트 정수로 변환
+          }
+          return { question, sort: Math.abs(hash) };
+        })
+        .sort((a, b) => a.sort - b.sort)
+        .map(item => item.question);
       const categoryQuestions = shuffled.slice(0, 3);
       teachersQuestions.push(...categoryQuestions);
     }
@@ -107,12 +117,22 @@ export async function POST(
         include: { category: true }
       });
       
-      // 매치 ID와 카테고리를 시드로 사용해서 일관된 랜덤 결과 생성 (세션 API와 동일)
-      const shuffled = allCategoryQuestions.sort((a, b) => {
-        const seed = matchId + category.id + 'student' + a.id + b.id;
-        const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return (hash % 2) - 0.5;
-      });
+      // 매치 ID를 시드로 사용한 개선된 랜덤 셔플 (세션 API와 동일)
+      const seed = matchId + '_' + category.id + '_student';
+      const shuffled = allCategoryQuestions
+        .map(question => {
+          // 문자열 해시 생성 (더 강력한 랜덤성)
+          let hash = 0;
+          const str = seed + '_' + question.id;
+          for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // 32비트 정수로 변환
+          }
+          return { question, sort: Math.abs(hash) };
+        })
+        .sort((a, b) => a.sort - b.sort)
+        .map(item => item.question);
       const categoryQuestions = shuffled.slice(0, 3);
       studentsQuestions.push(...categoryQuestions);
     }
