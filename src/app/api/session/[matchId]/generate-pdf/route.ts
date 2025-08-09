@@ -164,31 +164,45 @@ export async function POST(
 
     // 환경에 따른 Puppeteer 설정
     let browser;
-    const isVercel = !!process.env.VERCEL_ENV;
+    const isVercel = !!process.env.VERCEL || !!process.env.VERCEL_ENV;
     
-    if (isVercel) {
-      // Vercel 환경에서 puppeteer-core + chromium 사용
-      const chromium = (await import('@sparticuz/chromium')).default;
-      const puppeteer = await import('puppeteer-core');
-      
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath(),
-        headless: true,
-      });
-    } else {
-      // 로컬 환경에서 일반 puppeteer 사용
-      const puppeteer = await import('puppeteer');
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+    console.log('PDF 생성 시작:', { isVercel, matchId });
+    
+    try {
+      if (isVercel) {
+        console.log('Vercel 환경에서 puppeteer-core + chromium 사용');
+        // Vercel 환경에서 puppeteer-core + chromium 사용
+        const chromium = (await import('@sparticuz/chromium')).default;
+        const puppeteer = await import('puppeteer-core');
+        
+        browser = await puppeteer.launch({
+          args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        });
+        console.log('Vercel 브라우저 시작 성공');
+      } else {
+        console.log('로컬 환경에서 일반 puppeteer 사용');
+        // 로컬 환경에서 일반 puppeteer 사용
+        const puppeteer = await import('puppeteer');
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        console.log('로컬 브라우저 시작 성공');
+      }
+    } catch (browserError) {
+      console.error('브라우저 시작 실패:', browserError);
+      throw new Error(`브라우저 시작 실패: ${browserError.message}`);
     }
     
     try {
+      console.log('페이지 생성 중...');
       const page = await browser.newPage()
+      console.log('HTML 컨텐츠 설정 중...');
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
       
+      console.log('PDF 생성 중...', pdfFilePath);
       // PDF 생성 및 저장
       await page.pdf({
         path: pdfFilePath,
@@ -201,8 +215,13 @@ export async function POST(
           left: '20px'
         }
       })
+      console.log('PDF 파일 생성 완료');
+    } catch (pdfError) {
+      console.error('PDF 생성 과정에서 오류:', pdfError);
+      throw new Error(`PDF 생성 실패: ${pdfError.message}`);
     } finally {
       if (browser) {
+        console.log('브라우저 종료 중...');
         await browser.close()
       }
     }
@@ -223,7 +242,14 @@ export async function POST(
       }
     })
   } catch (error) {
-    console.error('PDF 생성 실패:', error)
-    return NextResponse.json({ error: 'PDF 생성 중 오류가 발생했습니다.' }, { status: 500 })
+    console.error('PDF 생성 실패:', {
+      error: error.message,
+      stack: error.stack,
+      matchId,
+      isVercel: !!process.env.VERCEL || !!process.env.VERCEL_ENV
+    })
+    return NextResponse.json({ 
+      error: `PDF 생성 중 오류가 발생했습니다: ${error.message}` 
+    }, { status: 500 })
   }
 }
