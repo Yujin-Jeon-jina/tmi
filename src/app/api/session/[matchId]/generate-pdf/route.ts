@@ -174,7 +174,7 @@ export async function POST(
       browser = await puppeteer.launch({
         args: chromium.args,
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
+        headless: true,
       });
     } else {
       // 로컬 환경에서 일반 puppeteer 사용

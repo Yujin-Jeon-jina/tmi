@@ -54,7 +54,7 @@ export default function ResultPage() {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        await response.json() // PDF 생성 응답 확인
         
         // 매치 정보 다시 가져오기 (PDF URL이 업데이트됨)
         fetchMatchStatus()
