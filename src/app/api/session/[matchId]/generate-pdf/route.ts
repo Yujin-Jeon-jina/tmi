@@ -240,7 +240,7 @@ export async function POST(
         })
         
         // PDF를 직접 반환
-        return new Response(pdfBuffer, {
+        return new Response(Buffer.from(pdfBuffer), {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="${matchId}.pdf"`
