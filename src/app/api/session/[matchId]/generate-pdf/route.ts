@@ -72,15 +72,22 @@ export async function POST(
     });
 
     for (const category of teacherCategories) {
-      const categoryQuestions = await prisma.teachersQuestion.findMany({
+      // 모든 해당 카테고리 질문을 가져온 후 매치별로 일관된 랜덤 선택
+      const allCategoryQuestions = await prisma.teachersQuestion.findMany({
         where: { 
           categoryId: category.id,
           isActive: true 
         },
-        include: { category: true },
-        orderBy: { id: 'asc' },
-        take: 3
+        include: { category: true }
       });
+      
+      // 매치 ID와 카테고리를 시드로 사용해서 일관된 랜덤 결과 생성 (세션 API와 동일)
+      const shuffled = allCategoryQuestions.sort((a, b) => {
+        const seed = matchId + category.id + 'teacher' + a.id + b.id;
+        const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return (hash % 2) - 0.5;
+      });
+      const categoryQuestions = shuffled.slice(0, 3);
       teachersQuestions.push(...categoryQuestions);
     }
 
@@ -91,15 +98,22 @@ export async function POST(
     });
 
     for (const category of studentCategories) {
-      const categoryQuestions = await prisma.studentsQuestion.findMany({
+      // 모든 해당 카테고리 질문을 가져온 후 매치별로 일관된 랜덤 선택
+      const allCategoryQuestions = await prisma.studentsQuestion.findMany({
         where: { 
           categoryId: category.id,
           isActive: true 
         },
-        include: { category: true },
-        orderBy: { id: 'asc' },
-        take: 3
+        include: { category: true }
       });
+      
+      // 매치 ID와 카테고리를 시드로 사용해서 일관된 랜덤 결과 생성 (세션 API와 동일)
+      const shuffled = allCategoryQuestions.sort((a, b) => {
+        const seed = matchId + category.id + 'student' + a.id + b.id;
+        const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return (hash % 2) - 0.5;
+      });
+      const categoryQuestions = shuffled.slice(0, 3);
       studentsQuestions.push(...categoryQuestions);
     }
 
